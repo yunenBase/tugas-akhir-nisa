@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "294201260776",
+    "firebase_url": "https://sistemmonitoringgelombang-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "sistemmonitoringgelombang",
+    "storage_bucket": "sistemmonitoringgelombang.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:294201260776:android:01376b3327a18f1ac1275d",
+        "android_client_info": {
+          "package_name": "com.annisa.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNxXd60uyItje_kHKMBer_jK_NzFD5voY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:294201260776:android:5b6d996605522e2cc1275d",
+        "android_client_info": {
+          "package_name": "com.example.buttombar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNxXd60uyItje_kHKMBer_jK_NzFD5voY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:294201260776:android:9875b6e7ebb6af25c1275d",
+        "android_client_info": {
+          "package_name": "com.example.tes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNxXd60uyItje_kHKMBer_jK_NzFD5voY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
