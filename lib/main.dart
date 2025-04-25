@@ -1,15 +1,36 @@
+import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import 'package:tugas_akhir_nisa/send.dart';
+import 'package:collection/collection.dart';
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+int _lastNotifiedTimestamp = 0; // Timestamp untuk notifikasi terakhir
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   // Initialize Firebase
   await Firebase.initializeApp();
+
+  // Initialize Notifications
+  await _initializeNotifications();
+
+  // Mulai mendengarkan Firestore secara realtime
+  listenToFirestore();
+
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  MyApp() {}
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -20,79 +41,99 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class FirestoreTestScreen extends StatefulWidget {
-  @override
-  _FirestoreTestScreenState createState() => _FirestoreTestScreenState();
+// Fungsi inisialisasi notifikasi
+Future<void> _initializeNotifications() async {
+  const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const initSettings = InitializationSettings(android: androidSettings);
+
+  // Initialize the local notifications plugin
+  await flutterLocalNotificationsPlugin.initialize(initSettings);
+
+  // Check if the platform is Android and if it's Android 13 or above, request permission
+  if (Platform.isAndroid && await _isAndroid13OrAbove()) {
+    final androidImplementation =
+        flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+    await androidImplementation?.requestNotificationsPermission();
+  }
 }
 
-class _FirestoreTestScreenState extends State<FirestoreTestScreen> {
-  // Data fields to hold fetched data
-  String formattedDate = '';
-  double angin = 0.0;
-  double arus = 0.0;
-  int timestamp = 0;
+// Check Android Version
+Future<bool> _isAndroid13OrAbove() async {
+  final androidInfo = await DeviceInfoPlugin().androidInfo;
+  return androidInfo.version.sdkInt >= 33;
+}
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchDataFromFirestore();
-  }
-
-  Future<void> _fetchDataFromFirestore() async {
-    try {
-      // Fetch the latest document in the 'wavex' collection
-      var snapshot =
-          await FirebaseFirestore.instance
-              .collection('wavex')
-              .orderBy('Timestamp', descending: true)
-              .limit(1)
-              .get();
-
-      if (snapshot.docs.isNotEmpty) {
-        var doc = snapshot.docs.first;
-        setState(() {
-          // Set data from Firestore
-          formattedDate = doc.id; // This is the 'yyyy-MM-dd' formatted date
-          angin = doc['Angin'];
-          arus = doc['Arus'];
-          timestamp = doc['Timestamp'];
-        });
-      }
-    } catch (e) {
-      debugPrint("❌ Gagal mengambil data: $e");
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Firestore Data')),
-      body: Center(
-        child:
-            formattedDate.isEmpty
-                ? CircularProgressIndicator()
-                : Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Waktu: $formattedDate',
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      SizedBox(height: 10),
-                      Text('Angin: $angin m/s', style: TextStyle(fontSize: 18)),
-                      SizedBox(height: 10),
-                      Text('Arus: $arus m/s', style: TextStyle(fontSize: 18)),
-                      SizedBox(height: 10),
-                      Text(
-                        'Timestamp: $timestamp',
-                        style: TextStyle(fontSize: 18),
-                      ),
-                    ],
-                  ),
-                ),
-      ),
+// Fungsi untuk mendengarkan perubahan data realtime dari Firestore
+void listenToFirestore() {
+  FirebaseFirestore.instance.collection("wavex").snapshots().listen((snapshot) {
+    final todayDocId = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final todayDoc = snapshot.docs.firstWhereOrNull(
+      (doc) => doc.id == todayDocId,
     );
+
+    if (todayDoc != null) {
+      // No need to cast todayDoc.data(), it's already Map<String, dynamic>
+      final data = todayDoc.data();
+
+      final latestEntry = _getLatestEntry(data);
+      if (latestEntry == null) return;
+
+      final double angin = latestEntry["Angin"];
+      final double arus = latestEntry["Arus"];
+
+      final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+      // Always send notification if values exceed the threshold
+      if (angin > 5 || arus > 5) {
+        // If enough time has passed since the last notification, send a new one
+        if (now - _lastNotifiedTimestamp > 5) {
+          // Adjusted interval (1 minute for testing)
+          _showNotification(angin, arus);
+          _lastNotifiedTimestamp =
+              now; // Update timestamp after sending notification
+        }
+      }
+    }
+  });
+}
+
+// Fungsi pembantu untuk mengambil data terbaru
+Map<String, dynamic>? _getLatestEntry(Map<String, dynamic> data) {
+  if (data.isEmpty) return null;
+
+  final keys = data.keys.toList();
+  keys.sort(); // ascending
+  final latestKey = keys.last;
+
+  final latestData = data[latestKey];
+  if (latestData is Map<String, dynamic>) {
+    return {
+      "Angin": latestData["Angin"],
+      "Arus": latestData["Arus"],
+      "timestampKey": latestKey,
+    };
   }
+  return null;
+}
+
+// Fungsi untuk menampilkan notifikasi
+void _showNotification(double angin, double arus) async {
+  const androidDetails = AndroidNotificationDetails(
+    'sensor_alerts',
+    'Sensor Alerts',
+    importance: Importance.max,
+    priority: Priority.high,
+  );
+
+  const notificationDetails = NotificationDetails(android: androidDetails);
+
+  await flutterLocalNotificationsPlugin.show(
+    0,
+    '🚨 Peringatan Sensor',
+    'Angin: $angin | Arus: $arus telah melebihi batas aman!',
+    notificationDetails,
+  );
 }

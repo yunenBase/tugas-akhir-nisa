@@ -7,22 +7,28 @@ class FirestoreTestScreen extends StatelessWidget {
 
   Future<void> _sendDummyData() async {
     final firestore = FirebaseFirestore.instance;
-    final double angin = 4.2;
-    final double arus = 1.7;
+    final double angin = 8;
+    final double arus = 8;
 
-    // Format the current date to yyyy-MM-dd for document ID
+    // Format date untuk ID dokumen
     final String formattedDate = DateFormat(
       'yyyy-MM-dd',
     ).format(DateTime.now());
 
-    // Get the current UNIX timestamp (in seconds)
+    // Unix timestamp sebagai field name
     final int timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
-    final data = {"Angin": angin, "Arus": arus, "Timestamp": timestamp};
+    // Data yang akan dimasukkan
+    final Map<String, dynamic> data = {
+      "$timestamp": {"Angin": angin, "Arus": arus},
+    };
 
     try {
-      // Create the document with the formatted date as document ID
-      await firestore.collection("wavex").doc(formattedDate).set(data);
+      // Gunakan merge agar tidak menimpa data sebelumnya
+      await firestore
+          .collection("wavex")
+          .doc(formattedDate)
+          .set(data, SetOptions(merge: true));
       debugPrint("✔ Data terkirim ke Firestore! $data");
     } catch (e) {
       debugPrint("❌ Gagal kirim data: $e");
