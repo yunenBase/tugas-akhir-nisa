@@ -7,11 +7,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:tugas_akhir_nisa/send.dart';
 import 'package:collection/collection.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
 int _lastNotifiedTimestamp = 0; // Timestamp untuk notifikasi terakhir
+final AudioPlayer _audioPlayer = AudioPlayer();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -96,6 +98,11 @@ void listenToFirestore() {
               now; // Update timestamp after sending notification
         }
       }
+      // Trigger Alarm if Arus > 7 and Angin > 7
+      if (angin > 7 && arus > 7) {
+        print("Triggering Alarm...");
+        _playAlarm(); // Play the alarm sound
+      }
     }
   });
 }
@@ -136,4 +143,15 @@ void _showNotification(double angin, double arus) async {
     'Angin: $angin | Arus: $arus telah melebihi batas aman!',
     notificationDetails,
   );
+}
+
+void _playAlarm() async {
+  try {
+    await _audioPlayer.play(
+      AssetSource('sounds/alarm.wav'),
+    ); // Play the alarm sound
+    print("Alarm sound played.");
+  } catch (e) {
+    print("Error playing alarm: $e");
+  }
 }
