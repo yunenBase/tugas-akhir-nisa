@@ -7,8 +7,8 @@ class FirestoreTestScreen extends StatelessWidget {
 
   Future<void> _sendDummyData() async {
     final firestore = FirebaseFirestore.instance;
-    final double angin = 7;
-    final double arus = 6;
+    final double angin = 8;
+    final double arus = 8;
 
     // Format date untuk ID dokumen
     final String formattedDate = DateFormat(

@@ -1,48 +1,77 @@
-// lib/data_screen.dart
-
 import 'package:flutter/material.dart';
+import 'firestore_listener.dart';
+import 'package:intl/intl.dart';
 
-class DataScreen extends StatelessWidget {
-  final String formattedDate;
-  final double angin;
-  final double arus;
-  final int timestamp;
+class DataScreen extends StatefulWidget {
+  const DataScreen({super.key});
 
-  DataScreen({
-    required this.formattedDate,
-    required this.angin,
-    required this.arus,
-    required this.timestamp,
-  });
+  @override
+  _DataScreenState createState() => _DataScreenState();
+}
+
+class _DataScreenState extends State<DataScreen> {
+  final List<Map<String, dynamic>> _dataLog = [];
+
+  @override
+  void initState() {
+    super.initState();
+    print("DataScreen initState: Starting Firestore listener");
+
+    listenToFirestore(
+      (angin, arus) {
+        // Optional: masih bisa digunakan kalau mau
+      },
+      (allEntries) {
+        if (mounted) {
+          setState(() {
+            _dataLog
+              ..clear()
+              ..addAll(
+                allEntries.reversed.map((entry) {
+                  return {
+                    'time': DateFormat('HH:mm:ss').format(entry['time']),
+                    'angin': entry['angin'],
+                    'arus': entry['arus'],
+                  };
+                }),
+              );
+          });
+        }
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final displayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     return Scaffold(
-      appBar: AppBar(title: Text('Firestore Data')),
-      body:
-          formattedDate.isEmpty
-              ? CircularProgressIndicator()
-              : Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Waktu: $formattedDate',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    SizedBox(height: 10),
-                    Text('Angin: $angin m/s', style: TextStyle(fontSize: 18)),
-                    SizedBox(height: 10),
-                    Text('Arus: $arus m/s', style: TextStyle(fontSize: 18)),
-                    SizedBox(height: 10),
-                    Text(
-                      'Timestamp: $timestamp',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ],
+      appBar: AppBar(title: Text('Firestore Data for $displayDate')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child:
+            _dataLog.isEmpty
+                ? const Center(child: Text("Belum ada data"))
+                : SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columns: const [
+                      DataColumn(label: Text('Waktu')),
+                      DataColumn(label: Text('Angin')),
+                      DataColumn(label: Text('Arus')),
+                    ],
+                    rows:
+                        _dataLog.map((entry) {
+                          return DataRow(
+                            cells: [
+                              DataCell(Text(entry['time'])),
+                              DataCell(Text(entry['angin'].toStringAsFixed(2))),
+                              DataCell(Text(entry['arus'].toStringAsFixed(2))),
+                            ],
+                          );
+                        }).toList(),
+                  ),
                 ),
-              ),
+      ),
     );
   }
 }
