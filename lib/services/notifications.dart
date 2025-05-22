@@ -42,26 +42,33 @@ Future<void> _onNotificationSelected(NotificationResponse response) async {
 
 // Show notification
 Future<void> showNotification(double angin, double arus) async {
-  const androidDetails = AndroidNotificationDetails(
-    'sensor_alerts',
-    'Sensor Alerts',
-    importance: Importance.max,
-    priority: Priority.high,
-    actions: [
-      AndroidNotificationAction(
+  // Conditionally add the "Stop Alarm" action only if alarm condition is met
+  final List<AndroidNotificationAction> actions = [];
+  if (angin > 8 && arus > 1) {
+    actions.add(
+      const AndroidNotificationAction(
         'stop_alarm',
         'Hentikan Alarm',
         showsUserInterface: true,
       ),
-    ],
+    );
+  }
+
+  final androidDetails = AndroidNotificationDetails(
+    // Removed 'const'
+    'sensor_alerts',
+    'Sensor Alerts',
+    importance: Importance.max,
+    priority: Priority.high,
+    actions: actions,
   );
 
-  const notificationDetails = NotificationDetails(android: androidDetails);
+  final notificationDetails = NotificationDetails(android: androidDetails);
 
   await flutterLocalNotificationsPlugin.show(
     0,
-    '🚨 Peringatan Sensor',
-    'Angin: $angin | Arus: $arus telah melebihi batas aman!',
+    'Peringatan Kondisi Laut',
+    'Angin: $angin | Arus: $arus. Arus kuat dan angin kencang hindari aktivitas di laut',
     notificationDetails,
     payload: 'stop_alarm',
   );

@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:tugas_akhir_nisa/data_screen.dart';
-import 'notifications.dart';
+import 'package:tugas_akhir_nisa/bottomnavbar.dart';
+import 'package:tugas_akhir_nisa/services/notifications.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +23,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Firestore Data',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: DataScreen(),
+      debugShowCheckedModeBanner: false,
+      home: BottomNavBar(),
     );
   }
 }

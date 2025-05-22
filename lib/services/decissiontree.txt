@@ -1,0 +1,21 @@
+if (angin <= 8.05) {
+            if (arus <= 1.00) {
+                if (angin <= 5.07) {
+                    classification = "Aman";
+                } else {
+                    classification = "Waspada";
+                }
+            } else {
+                classification = "Waspada";
+            }
+        } else {
+            if (arus <= 1.00) {
+                if (arus <= 0.34) {
+                    classification = "Waspada";
+                } else {
+                    classification = "Waspada";
+                }
+            } else {
+                classification = "Bahaya";
+            }
+        }

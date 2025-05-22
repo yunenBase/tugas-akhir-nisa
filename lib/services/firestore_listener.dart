@@ -6,10 +6,10 @@ import 'alarm.dart';
 
 int _lastNotifiedTimestamp = 0; // Timestamp for the last notification
 
-void listenToFirestore([
+void listenToFirestore({
   void Function(double, double)? onLatestData,
   void Function(List<Map<String, dynamic>>)? onAllData,
-]) {
+}) {
   FirebaseFirestore.instance
       .collection("wavex")
       .snapshots()
@@ -40,24 +40,24 @@ void listenToFirestore([
 
             // Notifikasi & alarm tetap seperti semula
             final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-            if (angin > 5 || arus > 5) {
+            if (angin > 5.5 || arus > 0.1) {
               if (now - _lastNotifiedTimestamp > 5) {
                 showNotification(angin, arus);
                 _lastNotifiedTimestamp = now;
-                print("Notification triggered: Angin=$angin, Arus=$arus");
+                print("Kondisi Angin=$angin, Arus=$arus. Berhati-hati jika disekitar pesisr pantai");
               }
             }
-            if (angin > 7 && arus > 7) {
+            if (angin > 8 && arus > 1) {
               print("Triggering Alarm...");
               playAlarm();
             }
 
-            // Callback untuk satu data terbaru (lama)
+            // Callback untuk satu data terbaru
             if (onLatestData != null) {
               onLatestData(angin, arus);
             }
 
-            // ✅ Callback untuk semua data (baru)
+            // Callback untuk semua data
             if (onAllData != null) {
               final allEntries = _getAllEntries(data);
               onAllData(allEntries);
